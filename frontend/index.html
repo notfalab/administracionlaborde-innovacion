@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="utf-8">
+ <title>Administración Laborde Innovación</title>
+ <style>
+   body { font-family: Arial, sans-serif; padding: 20px; }
+   .hidden { display: none; }
+ </style>
+</head>
+<body>
+ <h1>Administración Laborde Innovación</h1>
+ <div id="login-section">
+   <h2>Inicio de sesión</h2>
+   <input type="password" id="password-input" placeholder="Contraseña"/>
+   <button id="login-button">Ingresar</button>
+   <p id="login-error" style="color:red;"></p>
+ </div>
+ <div id="main-section" class="hidden">
+   <button id="logout-button">Cerrar sesión</button>
+   <h2>Cursos</h2>
+   <button id="load-courses">Cargar cursos</button>
+   <ul id="courses-list"></ul>
+   <h3>Agregar curso</h3>
+   <input id="course-name" placeholder="Nombre"/>
+   <button id="add-course">Agregar</button>
+   <h2>Pólizas</h2>
+   <button id="load-policies">Cargar pólizas</button>
+   <ul id="policies-list"></ul>
+   <h3>Agregar póliza</h3>
+   <input id="policy-name" placeholder="Asegurado"/>
+   <button id="add-policy">Agregar</button>
+ </div>
+ <script>
+   const apiUrl = '/api';
+   const loginSection = document.getElementById('login-section');
+   const mainSection = document.getElementById('main-section');
+   const loginButton = document.getElementById('login-button');
+   const logoutButton = document.getElementById('logout-button');
+   const passwordInput = document.getElementById('password-input');
+   const loginError = document.getElementById('login-error');
+   let token = null;
+   function getHeaders() {
+     return token ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token } : { 'Content-Type': 'application/json' };
+   }
+   loginButton.addEventListener('click', async () => {
+     const password = passwordInput.value;
+     const res = await fetch(apiUrl + '/login', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ password })
+     });
+     if (res.ok) {
+       const data = await res.json();
+       token = data.token;
+       loginSection.classList.add('hidden');
+       mainSection.classList.remove('hidden');
+       loginError.textContent = '';
+     } else {
+       loginError.textContent = 'Contraseña incorrecta';
+     }
+   });
+   logoutButton.addEventListener('click', () => {
+     token = null;
+     mainSection.classList.add('hidden');
+     loginSection.classList.remove('hidden');
+   });
+   document.getElementById('load-courses').addEventListener('click', async () => {
+     const res = await fetch(apiUrl + '/courses', { headers: getHeaders() });
+     const list = document.getElementById('courses-list');
+     list.innerHTML = '';
+     if (res.ok) {
+       const data = await res.json();
+       data.forEach(course => {
+         const li = document.createElement('li');
+         li.textContent = course.name || 'Curso ' + course.id;
+         list.appendChild(li);
+       });
+     }
+   });
+   document.getElementById('add-course').addEventListener('click', async () => {
+     const name = document.getElementById('course-name').value;
+     await fetch(apiUrl + '/courses', {
+       method: 'POST',
+       headers: getHeaders(),
+       body: JSON.stringify({ name })
+     });
+     document.getElementById('course-name').value = '';
+   });
+   document.getElementById('load-policies').addEventListener('click', async () => {
+     const res = await fetch(apiUrl + '/policies', { headers: getHeaders() });
+     const list = document.getElementById('policies-list');
+     list.innerHTML = '';
+     if (res.ok) {
+       const data = await res.json();
+       data.forEach(policy => {
+         const li = document.createElement('li');
+         li.textContent = policy.name || 'Póliza ' + policy.id;
+         list.appendChild(li);
+       });
+     }
+   });
+   document.getElementById('add-policy').addEventListener('click', async () => {
+     const name = document.getElementById('policy-name').value;
+     await fetch(apiUrl + '/policies', {
+       method: 'POST',
+       headers: getHeaders(),
+       body: JSON.stringify({ name })
+     });
+     document.getElementById('policy-name').value = '';
+   });
+ </script>
+</body>
+</html>
